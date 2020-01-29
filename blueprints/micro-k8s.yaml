@@ -1,0 +1,82 @@
+name: Moff-MicroK8s
+version: v1
+inputs:
+  env:
+    type: string
+    enum:
+      - AWS
+      - VSPHERE
+      - AZURE
+      - GCP
+    default: AWS
+    title: Environment
+    description: Core Environment
+  Extensibility:
+    type: boolean
+    default: true
+    title: Enable Extensibility
+    description: Executes logic defined by ABX constraints
+  upstream-version:
+    type: string
+    enum:
+      - 1.12/stable
+      - 1.13/stable
+      - 1.14/stable
+    default: 1.13/stable
+    title: Upstream Version
+    description: Select your desired upstream Kubernetes series
+resources:
+  microk8s_1:
+    type: Cloud.Machine
+    properties:
+      image: OAI-Base-Image-1804
+      flavor: OAI-R4-Medium
+      enable_tower: '${input.Extensibility}'
+      #      storage:
+      #        constraints:
+      #          - tag: tier-0
+      tags:
+        - key: vnf
+          value: containers
+        - key: orchestrator
+          value: k8
+      remoteAccess:
+        authentication: keyPairName
+        keyPair: generic-cloud-wk
+      constraints:
+        - tag: '${"cloud:" + to_lower(input.env)}'
+      cloudConfig: |
+        hostname: '${"moff-k8-" + to_lower(input.env)}'
+        repo_update: true
+        repo_upgrade: all
+        chpasswd:
+          list: |
+            ubuntu:VMware1!
+          expire: False
+          
+        runcmd:
+          - sudo snap install microk8s --classic --channel=${input.upstream-version}
+          - sudo microk8s.status --wait-ready
+          - sudo ufw allow in on cbr0 && sudo ufw allow out on cbr0
+          - sudo ufw default allow routed
+          - sudo iptables -P FORWARD ACCEPT
+          #- sudo microk8s.enable dns dashboard ingress
+          - sudo snap alias microk8s.kubectl kubectl
+          - kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep default-token | cut -d " " -f1) > $HOME/token.txt
+          - git clone https://github.com/moffzilla/vrops-k8-monitoring.git
+          - kubectl apply -f $HOME/vrops-k8-monitoring/cAdvisor.yaml
+      cloudConfigSettings:
+        phoneHomeShouldWait: false
+        phoneHomeFailOnTimeout: false
+        phoneHomeTimeoutSeconds: 300
+      networks:
+        - name: '${resource.wpnet.name}'
+          network: '${resource.wpnet.id}'
+          assignment: dynamic
+  wpnet:
+    type: Cloud.Network
+    properties:
+      name: wpnet
+      networkType: existing
+      constraints:
+        - tag: '${"cloud:" + to_lower(input.env)}'

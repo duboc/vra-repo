@@ -1,0 +1,24 @@
+formatVersion: 1
+inputs:
+  ServerCount:
+    type: integer
+    enum:
+      - 1
+      - 2
+      - 3
+resources:
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    properties:
+      count: '${input.ServerCount}'
+      image: w2k12
+      cpuCount: 2
+      totalMemoryMB: 8024
+      customizationSpec: WindowsvRA2
+      networks:
+        - network: '${resource.Cloud_vSphere_Network_1.id}'
+          assignment: static
+  Cloud_vSphere_Network_1:
+    type: Cloud.vSphere.Network
+    properties:
+      networkType: existing

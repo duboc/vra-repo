@@ -1,0 +1,72 @@
+formatVersion: 1
+inputs:
+  cloud_target:
+    type: string
+    description: Select target cloud
+    enum:
+      - 'platform:vsphere'
+  db-play:
+    type: string
+    title: Database playbook URL
+    description: URL of Ansible playbook for database
+    default: 'https://raw.githubusercontent.com/darrylcauldwell/titoAnsibleHeadless/master/tito-db.yml'
+  web-play:
+    type: string
+    title: Web playbook URL
+    description: URL of Ansible playbook for web
+    default: 'https://raw.githubusercontent.com/darrylcauldwell/titoAnsibleHeadless/master/tito-web.yml'
+resources:
+  web-vm:
+    type: Cloud.Machine
+    properties:
+      name: web
+      cloudConfig: |
+        #cloud-config
+        output: {all: '| tee -a /var/log/cloud-init-output.log'}
+        runcmd:
+        - apt update -y
+        - apt install software-properties-common
+        - apt-add-repository --yes --update ppa:ansible/ansible
+        - apt install ansible -y
+        - wget ${input.web-play} -O /etc/ansible/main.yaml
+        - ansible-playbook -v /etc/ansible/main.yaml --extra-vars "SQLSERVER='${resource.db-vm.networks[0].address}'"
+        - sed -i 's/#log_path/log_path/g' /etc/ansible/ansible.cfg
+      image: Ubuntu
+      flavor: Small
+      remoteAccess:
+        authentication: usernamePassword
+      constraints:
+        - tag: '${input.cloud_target}'
+      networks:
+        - name: '${resource.Public_Cloud_Network.name}'
+          network: '${resource.Public_Cloud_Network.id}'
+          assignPublicIpAddress: true
+  db-vm:
+    type: Cloud.Machine
+    properties:
+      name: db
+      cloudConfig: |
+        #cloud-config
+        output: {all: '| tee -a /var/log/cloud-init-output.log'}
+        runcmd:
+        - apt update -y
+        - apt install software-properties-common
+        - apt-add-repository --yes --update ppa:ansible/ansible
+        - apt install ansible -y
+        - wget ${input.db-play} -O /etc/ansible/main.yaml
+        - ansible-playbook -v /etc/ansible/main.yaml --extra-vars "SQLSERVER='${resource.db-vm.networks[0].address}'"
+        - sed -i 's/#log_path/log_path/g' /etc/ansible/ansible.cfg
+      image: Ubuntu
+      flavor: Small
+      remoteAccess:
+        authentication: usernamePassword
+      constraints:
+        - tag: '${input.cloud_target}'
+      networks:
+        - name: '${resource.Public_Cloud_Network.name}'
+          network: '${resource.Public_Cloud_Network.id}'
+  Public_Cloud_Network:
+    type: Cloud.Network
+    properties:
+      name: PublicCloudNetwork
+      networkType: existing

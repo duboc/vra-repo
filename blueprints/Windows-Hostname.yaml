@@ -1,0 +1,24 @@
+name: Windows-Hostname
+formatVersion: 1
+inputs: {}
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    properties:
+      image: OAI-Windows2016
+      flavor: OAI-R4-xLarge
+      storage:
+        constraints:
+          - tag: tier-0
+      constraints:
+        - tag: 'cloud:vsphere'
+      #      remoteAccess:
+      #        authentication: usernamePassword
+      #        username: Administrator
+      #        password: Password1234@$
+      cloudConfig: |
+        #cloud-config
+        write_files:
+          content: Cloudbase-Init test
+          path: C:\test.txt
+        set_hostname: demoname

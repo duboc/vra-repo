@@ -1,0 +1,36 @@
+inputs:
+  env_core:
+    type: string
+    enum:
+      - AWS
+      - VSPHERE
+      - AZURE
+    default: VSPHERE
+    title: Core Environment
+    description: Select Environment for LB Deployment
+resources:
+  Cloud_LoadBalancer_1:
+    type: Cloud.LoadBalancer
+    properties:
+      routes:
+        - instancePort: '80'
+          instanceProtocol: HTTP
+          port: '80'
+          protocol: HTTP
+      network: '${resource.Cloud_Network_1.id}'
+      instances: []
+      internetFacing: false
+      constraints:
+        - tag: '${"cloud:" + to_lower(input.env_core)}'
+      tags:
+        - key: infrastructure
+          value: load-balancer
+        - key: cloud
+          value: '${to_lower(input.env_core)}'
+  Cloud_Network_1:
+    type: Cloud.Network
+    properties:
+      name: API Network Profile
+      networkType: existing
+      constraints:
+        - tag: '${"cloud:" + to_lower(input.env_core)}'
