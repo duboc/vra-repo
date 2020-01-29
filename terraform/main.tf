@@ -1,6 +1,3 @@
-# Provider Configuration 
-# I'm using the get-token.sh to update my env variable vra_refresh_token
-
 provider vra {
   url           = var.vra_url
   refresh_token = var.vra_refresh_token
