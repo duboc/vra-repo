@@ -22,20 +22,20 @@ def handler(context, inputs):
         return response
     
     def get_ls_id_by_name(logicalSwitchName):
-        url = "https://nsx-1.corp.local/api/v1/logical-switches"
+        url = "https://192.168.110.31/api/v1/logical-switches"
         headers = {
           'Authorization': 'Basic YWRtaW46Vk13YXJlMSFWTXdhcmUxIQ==',
           'Host': 'nsx-1.corp.local',
         }
         
-        name = {logicalSwitchName}
+        name = logicalSwitchName
         response = requests.request("GET", url, headers=headers, verify=False)
         ids = [ i["id"] for i in response.json()["results"] if i["display_name"] == name ]
 
         return ids
 
     def get_bridge_endpoints():
-        url = "https://nsx1.corp.local/api/v1/bridge-endpoints"
+        url = "https://192.168.110.31/api/v1/bridge-endpoints"
 
         payload = {
            "resource_type": "BRIDGEENDPOINT",
@@ -53,10 +53,10 @@ def handler(context, inputs):
         response.raise_for_status()
         return response.json()
     
-    def create_logical_ports(id, lsId):
-        url = "https://nsx-1.corp.local/api/v1/logical-ports"
+    def create_logical_ports(id, nameSwitch):
+        url = "https://192.168.110.31/api/v1/logical-ports"
         payload = {
-            "logical_switch_id": lsId,
+            "logical_switch_id": nameSwitch,
             "admin_state": "UP",
             "attachment": {
               "id": id,
@@ -84,9 +84,13 @@ def handler(context, inputs):
     print(logicalSwitchName)
 
     lsId = get_ls_id_by_name(logicalSwitchName)
+    print(lsId)
+    print(lsId[0])
     
+    nameSwitch = lsId[0]
+    print(nameSwitch)
     bridge_endpoints = get_bridge_endpoints()
 
-    createBridge = create_logical_ports(bridge_endpoints["id"], lsId[0])
+    createBridge = create_logical_ports(bridge_endpoints["id"], nameSwitch)
 
     print(createBridge)
