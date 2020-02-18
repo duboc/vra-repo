@@ -1,0 +1,14 @@
+---
+exportVersion: "1"
+exportId: "8a5e153e70586ee401705963e05c0c8b"
+name: "F5_Create_VIP"
+runtime: "python"
+entrypoint: "handler"
+timeoutSeconds: 180
+deploymentTimeoutSeconds: 600
+dependencies: "f5-sdk"
+actionType: "SCRIPT"
+provider: "on-prem"
+configuration:
+  const_azure-system_managed_identity: false
+memoryInMB: 150
