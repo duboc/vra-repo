@@ -1,0 +1,75 @@
+formatVersion: 1
+inputs:
+  quantidade:
+    type: integer
+    minimum: 1
+    maximum: 3
+  vipName:
+    type: string
+    maxLength: 10
+    minLength: 3
+  vipAddress:
+    type: string
+  portaServico:
+    type: string
+    pattern: '[0-9]'
+  nomeDoPool:
+    type: string
+    maxLength: 10
+    minLength: 3
+  poolDescription:
+    type: string
+    maxLength: 50
+    minLength: 3
+  algoritmoLb:
+    type: string
+    enum:
+      - round-robin
+      - least-connections-member
+      - least-sessions
+    default: round-robin
+resources:
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 1
+    properties:
+      image: Ubuntu
+      flavor: Small
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+c3lkRdrlzKydGO7YCGRVGZnsoJcwO3hm6AT3i2VGV3vHToV0v7XjjMMttHFdOUEqXUn+8pMLZdtXvX0V/9LyLbqzQRQzPMUE8iPgLhZ8BkwGt2AVruU4r+GAS8NMpER2duO0PF1GZX8OXy9vc1L1np+zjWujCeKSamTd/mAaLyixxO4noENmrf6rxwDXIEVlBiivu23q/vyx49zQnLIr9/+YnohQcJB7qiNmMzMoJBNpgVWId8pJl0IKsA+MZPlysdopa7lvKpfNdHmEQRuabAwbhFSTWIeTVCL3UIbx5OEQsZkNz9nFXxYagnn/QJpSV3VKxbQJa2SOz0W01QFn root@centos02a
+      count: '${input.quantidade}'
+      vipAddress: '${input.vipAddress}'
+      vipName: '${input.vipName}'
+      algoritmoLb: '${input.algoritmoLb}'
+      nomeDoPool: '${input.nomeDoPool}'
+      portaServico: '${input.portaServico}'
+      poolDescription: '${input.poolDescription}'
+      cloudConfig: |
+        #cloud-config
+        runcmd: 
+         - sudo su
+         - echo "nameserver 192.168.110.10" >> /etc/resolv.conf
+         - apt-get update -y
+         - apt-get install -y apache2 php-fpm libapache2-mod-php
+         - systemctl enable apache2
+         - systemctl start apache2
+         - systemctl enable php7.2-fpm
+         - systemctl start php7.2-fpm
+         - rm /var/www/html/index.html
+         - wget -c http://web-content.corp.local/files/nsx.png -O /var/www/html/nsx.png
+         - wget -c http://web-content.corp.local/files/index.php -O /var/www/html/index.php
+         - wget -c http://web-content.corp.local/files/index2.php -O /var/www/html/index2.php
+      networks:
+        - network: '${resource.Cloud_NSX_Network_1.id}'
+  Cloud_NSX_Network_1:
+    type: Cloud.NSX.Network
+    metadata:
+      layoutPosition:
+        - 1
+        - 0
+    properties:
+      networkType: existing
