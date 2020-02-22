@@ -1,0 +1,8 @@
+inputs: {}
+resources:
+    Cloud.Machine_1:
+      type: Cloud.Machine
+      properties:
+        name: 'nome'
+        image: 'Ubuntu'
+        flavor: 'Small'

@@ -1,0 +1,32 @@
+formatVersion: 1
+inputs: {}
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    properties:
+      image: ubuntu
+      flavor: small
+      constraints:
+        - tag: 'env:compute'
+      networks:
+        - network: '${resource.Cloud_NSX_Network_1.id}'
+      cloudConfig: |
+        #cloud-config
+        repo_update: true
+        repo_upgrade: true
+
+        runcmd:
+          - apt install apt-transport-https ca-certificates curl software-properties-common
+          - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+          - apt-get update
+          - apt install docker-ce
+          - systemctl enable docker
+          - usermod -aG docker ubuntu
+          - systemctl start docker
+          - docker run -d -p 4222:4222 -p 8222:8222 nats:2.1.2 --restart always
+  Cloud_NSX_Network_1:
+    type: Cloud.NSX.Network
+    properties:
+      networkType: existing
+

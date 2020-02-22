@@ -1,0 +1,97 @@
+formatVersion: 1
+inputs: {}
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    properties:
+      image: ubuntu
+      flavor: small
+      name: '${env.deploymentName}'
+      constraints:
+        - tag: 'env:compute'
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1UDCZciJBxVbSo2tpDsPWtyQ34JcY/tbPAlRsx2QUQaxttwCfrIEZURnn7OHiiwFvtiZy8nl1TCKa4s2SXLN/rEJvdDvlD9kWOSxJ1eBK3aPVVrT0TA3+rKFMhL5uz5Ku90iR0ZSALGz6uoGgLxizhbIrCWbnyCE5ThOPjCM6FvuefRUwSLuxJ6ZpenVfO2+TzTzp0a2qq5Wrt2sMsevpQGoveykB8Dliliwsx+hlC1LZ6V2Q59MOYY5SQ9PSXiUNjK5LbV32YjcQ2e2tU0qUpIytj/qFFrlZ9DRBN37GdbWH56LtHwgvXCLhSMuhYwXBJ5o/zsjnUwwW+Symsiql aduboc@administrators-MacBook-Pro-3.local
+      cloudConfig: |
+        #cloud-config
+        repo_update: true
+        repo_upgrade: all
+        write_files:
+          - path: /tmp/createAdmin.js
+            permissions: '0644'
+            content: |
+             db.createUser({
+                user: "admin",
+                pwd: "VMware1!",
+                roles: [
+                    { role: "userAdminAnyDatabase", db: "admin"},
+                    { role: "readWriteAnyDatabase", db: "admin"},
+                    { role: "dbAdminAnyDatabase",   db: "admin"}
+                ]
+             });
+          - path: /etc/mongod2.conf
+            permissions: '0644'
+            content: |
+             # mongod.conf
+             
+             # for documentation of all options, see:
+             #   http://docs.mongodb.org/manual/reference/configuration-options/
+             
+             # Where and how to store data.
+             storage:
+               dbPath: /var/lib/mongodb
+               journal:
+                 enabled: true
+             #  engine:
+             #  mmapv1:
+             #  wiredTiger:
+             
+             # where to write logging data.
+             systemLog:
+               destination: file
+               logAppend: true
+               path: /var/log/mongodb/mongod.log
+             
+             # network interfaces
+             net:
+               port: 27017
+               bindIpAll: true
+             
+             
+             # how the process runs
+             processManagement:
+               timeZoneInfo: /usr/share/zoneinfo
+             
+             security:
+               authorization: enabled
+             #operationProfiling:
+             
+             #replication:
+             
+             #shard             
+             ## Enterprise-Only Options:
+             
+             #auditLog:
+             
+             #snmp:
+        runcmd:
+          - hostname mongo-server
+          - wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+          - echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+          - apt-get update
+          - apt-get install -y mongodb-org
+          - systemctl daemon-reload
+          - systemctl enable mongod
+          - cp /etc/mongod.conf /etc/mongod.old
+          - mv /etc/mongod2.conf /etc/mongod.conf
+          - chmod 644 /etc/mongod.conf
+          - service mongod start
+          - mongo admin /tmp/createAdmin.js
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+  Cloud_Network_1:
+    type: Cloud.Network
+    properties:
+      name: '${env.deploymentName}'
+      networkType: existing
+
