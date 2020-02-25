@@ -1,32 +1,61 @@
 formatVersion: 1
-inputs: {}
+inputs:
+  wfinstance:
+    type: string
+    default: 'https://surf.wavefront.com'
+  wftoken:
+    type: string
+  wfsource:
+    type: string
+    default: cd-nats
+  natsaddress:
+    type: string
+    default: 'nats://0.0.0.0:4222'
+  publicKey:
+    type: string
 resources:
   Cloud_Machine_1:
     type: Cloud.Machine
     properties:
       image: ubuntu
       flavor: small
+      name: '${env.deploymentName}'
       constraints:
         - tag: 'env:compute'
-      networks:
-        - network: '${resource.Cloud_NSX_Network_1.id}'
+      remoteAccess:
+        authentication: publicPrivateKey
+        sshKey: '${input.publicKey}' 
       cloudConfig: |
         #cloud-config
         repo_update: true
-        repo_upgrade: true
-
+             
         runcmd:
-          - apt install apt-transport-https ca-certificates curl software-properties-common
-          - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-          - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-          - apt-get update
-          - apt install docker-ce
-          - systemctl enable docker
-          - usermod -aG docker ubuntu
-          - systemctl start docker
-          - docker run -d -p 4222:4222 -p 8222:8222 nats:2.1.2 --restart always
-  Cloud_NSX_Network_1:
-    type: Cloud.NSX.Network
+          - hostname nats-server
+          - apt-get update -y 
+          - apt-get install apt-transport-https ca-certificates curl software-properties-common
+          - /usr/bin/curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          - apt-key fingerprint 0EBFCD88 -y 
+          - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          - apt-get update -y 
+          - apt-get install docker-ce -y
+          - /bin/sed -i 's@ExecStart=/usr/bin/dockerd -H fd://@ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock@' /lib/systemd/system/docker.service
+          - /bin/systemctl daemon-reload
+          - /bin/systemctl restart docker
+          - docker run  --restart=always -d -p 4222:4222 -p 8222:8222 nats:2.1.2
+          - echo "export WAVEFRONT_INSTANCE=${input.wfinstance}" >> /root/.profile
+          - echo "export WAVEFRONT_TOKEN=${input.wftoken}" >> /root/.profile
+          - echo "export WAVEFRONT_SOURCE=${input.wfsource}" >> /root/.profile
+          - echo "export NATS_ENDPOINT=${input.natsaddress}" >> /root/.profile 
+          - source /root/.profile
+          - git clone https://github.com/duboc/cats-and-dogs
+          - docker run --restart=always -d -p 80:80  -e WAVEFRONT_INSTANCE=${input.wfinstance} -e WAVEFRONT_TOKEN=${input.wftoken} -e WAVEFRONT_SOURCE=${input.wfsource} -e NATS_ENDPOINT=$NATS_ENDPOINT duboc/cdbackend-nats:1.0
+          
+          
+      networks:
+        - network: '${resource.Cloud_Network_1.id}'
+  Cloud_Network_1:
+    type: Cloud.Network
     properties:
+      name: '${env.deploymentName}'
       networkType: existing
 
