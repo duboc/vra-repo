@@ -1,0 +1,11 @@
+---
+- name: ping my centos machine
+  hosts: all
+  tasks:
+  - name: use ping module
+    ping:
+      data: pong
+  - name: Create a file
+    file:
+      path: /tmp/teste
+      state: touch
