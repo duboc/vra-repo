@@ -20,7 +20,7 @@ resources:
   Cloud_vSphere_Machine_1:
     type: Cloud.vSphere.Machine
     properties:
-      name: ${env.deploymentName}
+      name: '${env.deploymentName}'
       imageRef: '${input.fahUrl}'
       cpuCount: 2
       totalMemoryMB: 4096
@@ -30,11 +30,13 @@ resources:
         - key: guestinfo.hostname
           value: fah.vmware.corp
         - key: guestinfo.ipaddress
-          value: ''
+          value: '${self.networks[0].address}'
         - key: guestinfo.netmask
           value: 24 (255.255.255.0)
+        - key: guestinfo.gateway
+          value: '${Cloud_vSphere_Network_1.gatewayAddress}'
         - key: guestinfo.dns
-          value: ''
+          value: '${substring(resource.Cloud_vSphere_Network_1.dnsServerAddresses, 1, length(resource.Cloud_vSphere_Network_1.dnsServerAddresses)-1)}'
         - key: guestinfo.ntp
           value: pool.ntp.org
         - key: guestinfo.http_proxy
@@ -67,10 +69,16 @@ resources:
           value: 'True'
         - key: guestinfo.fah_next_unit_percentage
           value: '90'
+      cloudConfig: |
+          runcmd:
+            - echo "execute" > something
       networks:
-        - network: '${resource.Cloud_vSphere_Network_1.id}'
+        - name: ${resource.Cloud_vSphere_Network_1.name}
+          network: '${resource.Cloud_vSphere_Network_1.id}'
+          assignment: static
   Cloud_vSphere_Network_1:
     type: Cloud.vSphere.Network
     properties:
       networkType: existing
-      name: ${env.deploymentName}
+      name: '${env.deploymentName}'
+
