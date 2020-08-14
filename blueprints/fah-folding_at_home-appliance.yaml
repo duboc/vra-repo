@@ -1,0 +1,76 @@
+formatVersion: 1
+inputs:
+  fahUrl:
+    type: string
+    default: 'https://download3.vmware.com/software/vmw-tools/VMWare_Folding@Home_Appliance/VMware-Appliance-FaH_1.0.4.ova'
+  rootPassword:
+    type: string
+    encrypted: true
+    default: VMware1!
+  fahUsername:
+    type: string
+  fahTeam:
+    type: string
+    default: 52737
+  fahRemotePass:
+    type: string
+    encrypted: true
+    default: VMware1!
+resources:
+  Cloud_vSphere_Machine_1:
+    type: Cloud.vSphere.Machine
+    properties:
+      name: ${env.deploymentName}
+      imageRef: '${input.fahUrl}'
+      cpuCount: 2
+      totalMemoryMB: 4096
+      constraints:
+        - tag: 'platform:vmw'
+      ovfProperties:
+        - key: guestinfo.hostname
+          value: fah.vmware.corp
+        - key: guestinfo.ipaddress
+          value: ''
+        - key: guestinfo.netmask
+          value: 24 (255.255.255.0)
+        - key: guestinfo.dns
+          value: ''
+        - key: guestinfo.ntp
+          value: pool.ntp.org
+        - key: guestinfo.http_proxy
+          value: ''
+        - key: guestinfo.https_proxy
+          value: ''
+        - key: guestinfo.no_proxy
+          value: ''
+        - key: guestinfo.root_password
+          value: '${input.fahUrl}'
+        - key: guestinfo.enable_ssh
+          value: 'True'
+        - key: guestinfo.fah_username
+          value: '${input.fahUsername}'
+        - key: guestinfo.fah_team
+          value: '${input.fahTeam}'
+        - key: guestinfo.fah_passkey
+          value: '' ### can be empty
+        - key: guestinfo.fah_mode
+          value: medium
+        - key: guestinfo.fah_gpu
+          value: 'False'
+        - key: guestinfo.fah_web_remote_networks
+          value: 0.0.0.0/0
+        - key: guestinfo.fah_remote_networks
+          value: 127.0.0.1 0.0.0.0/0
+        - key: guestinfo.fah_remote_pass
+          value: '${input.fahRemotePass}'
+        - key: guestinfo.fah_console_stats
+          value: 'True'
+        - key: guestinfo.fah_next_unit_percentage
+          value: '90'
+      networks:
+        - network: '${resource.Cloud_vSphere_Network_1.id}'
+  Cloud_vSphere_Network_1:
+    type: Cloud.vSphere.Network
+    properties:
+      networkType: existing
+      name: ${env.deploymentName}
