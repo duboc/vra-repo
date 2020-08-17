@@ -1,0 +1,143 @@
+formatVersion: 1
+inputs:
+  ambiente:
+    type: string
+    default: 'platform:vmw'
+    readOnly: true
+  username:
+    type: string
+    default: adminuser
+  password:
+    type: string
+    default: VMware123!
+    encrypted: true
+resources:
+  ansible_control_machine:
+    type: Cloud.Machine
+    properties:
+      image: Ubuntu
+      flavor: Small
+      constraints:
+        - tag: 'platform:vmw'
+      cloudConfig: |
+        #cloud-config
+        repo_update: true
+        ssh_pwauth: yes
+
+        chpasswd:
+          list: |
+            ${input.username}:${input.password}
+          expire: false
+        users:
+          - default
+          - name: ${input.username}
+            passwd: ${input.password}
+            lock_passwd: false
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            groups: [wheel, sudo, admin]
+            shell: '/bin/bash'
+
+        apt:
+          sources:
+            ansible-ubuntu-ansible.list:
+              source: "ppa:ansible/ansible"
+              keyserver: 'keyserver.ubuntu.com'
+              keyid: 7BB9C367
+              
+        packages:
+          - ansible
+        write_files:
+          - path: /etc/ansible/playbooks/ansible.yml
+            content: |
+              ---
+              - name: Install and Configure Ansible Control Machine for use with VMware Cloud Assembly
+                hosts: localhost
+                gather_facts: true
+                vars:
+                  ansible_username: ansible
+                  ansible_vault_password: cmVMware1!
+                  ansible_user_password: VMware
+                  slack_notification_content: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+                  slack_notification_webhook: https://hooks.slack.com/services/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
+                tasks:
+                  - name: Create Ansible User
+                    user:
+                      name: ansible
+                      groups: sudo
+                      shell: /bin/bash
+                      update_password: on_create
+                      generate_ssh_key: yes
+                      password: "{{ ansible_user_password | password_hash('sha512') }}"
+
+                  - name: Set Authorised Key for Ansible User
+                    authorized_key:
+                      user: ansible
+                      key: ssh-rsa ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1UDCZciJBxVbSo2tpDsPWtyQ34JcY/tbPAlRsx2QUQaxttwCfrIEZURnn7OHiiwFvtiZy8nl1TCKa4s2SXLN/rEJvdDvlD9kWOSxJ1eBK3aPVVrT0TA3+rKFMhL5uz5Ku90iR0ZSALGz6uoGgLxizhbIrCWbnyCE5ThOPjCM6FvuefRUwSLuxJ6ZpenVfO2+TzTzp0a2qq5Wrt2sMsevpQGoveykB8Dliliwsx+hlC1LZ6V2Q59MOYY5SQ9PSXiUNjK5LbV32YjcQ2e2tU0qUpIytj/qFFrlZ9DRBN37GdbWH56LtHwgvXCLhSMuhYwXBJ5o/zsjnUwwW+Symsiql aduboc@administrators-MacBook-Pro-3.local
+                      
+                  - name: Set Ansible Directory Permissions
+                    file:
+                      owner: ansible
+                      path: /etc/ansible
+                      recurse: yes
+                      state: directory
+
+                  - name: Create Cleartext Vault Pass File
+                    lineinfile:
+                      create: yes
+                      owner: ansible
+                      path: /etc/ansible/vault_pass.txt
+                      line: "{{ ansible_vault_password }}"
+
+                  - name: Update Config with Pass File Location
+                    lineinfile:
+                      owner: ansible
+                      path: /etc/ansible/ansible.cfg
+                      regexp: "vault_password_file"
+                      line: "vault_password_file = /etc/ansible/vault_pass.txt"
+
+                  - name: Update Config with Private Key Location
+                    lineinfile:
+                      owner: ansible
+                      path: /etc/ansible/ansible.cfg
+                      regexp: "private_key_file"
+                      line: "private_key_file = /home/ansible/.ssh/id_rsa"
+
+                  - name: Update Config with Host Key Check Setting
+                    lineinfile:
+                      owner: ansible
+                      path: /etc/ansible/ansible.cfg
+                      regexp: "host_key_checking"
+                      line: "host_key_checking = False"
+
+                  - name: Enable Password Based Auth
+                    become: true
+                    lineinfile:
+                      path: /etc/ssh/sshd_config
+                      state: present
+                      regexp: "PasswordAuthentication no"
+                      line: "PasswordAuthentication yes"
+
+                  - name: Restart SSHD
+                    become: True
+                    systemd:
+                      name: sshd
+                      state: restarted
+
+                  - name: Send Ansible Public Key to Slack
+                    uri:
+                      method: POST
+                      url: "{{ slack_notification_webhook }}"
+                      body: {"text": "Your ansible public key is ```{{ slack_notification_content | regex_replace('ansible-generated on.*') }}```"}
+                      body_format: json
+
+        runcmd:
+          - hostname ansible-vmw
+          - echo "Defaults:${input.username}"
+          - ansible-playbook --connection=local --inventory 127.0.0.1, /etc/ansible/playbooks/ansible.yml
+      networks:
+        - network: '${resource.Cloud_NSX_Network_1.id}'
+  Cloud_NSX_Network_1:
+    type: Cloud.NSX.Network
+    properties:
+      name: routed-network
+      networkType: routed

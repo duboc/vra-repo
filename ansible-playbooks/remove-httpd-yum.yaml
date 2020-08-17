@@ -1,0 +1,12 @@
+--- 
+- hosts: all
+  remote_user: root
+  connection: ssh
+  gather_facts: yes
+  vars:
+    username: admin
+  tasks:
+  - name: Uninstall HTTP
+    yum: 
+      name: httpd
+      state: absent
