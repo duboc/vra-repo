@@ -16,6 +16,12 @@ inputs:
     type: string
     encrypted: true
     default: VMware1!
+  fahMode:
+    type: string
+    enum:
+      - Light
+      - Medium
+      - Full
 resources:
   Cloud_vSphere_Machine_1:
     type: Cloud.vSphere.Machine
@@ -56,7 +62,7 @@ resources:
         - key: guestinfo.fah_passkey
           value: '' ### can be empty
         - key: guestinfo.fah_mode
-          value: medium
+          value: ${input.fahMode}
         - key: guestinfo.fah_gpu
           value: 'False'
         - key: guestinfo.fah_web_remote_networks
