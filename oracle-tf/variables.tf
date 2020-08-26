@@ -1,6 +1,6 @@
 variable "tenancy_ocid" {}
 variable "user_ocid" {}
 variable "fingerprint" {}
-variable "private_key" {}
+variable "private-key" {}
 variable "compartment_ocid" {}
 variable "region" {}
