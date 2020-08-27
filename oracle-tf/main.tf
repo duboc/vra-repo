@@ -5,6 +5,11 @@ resource "local_file" "key" {
 
 
 provider "oci" { 
+  
+  depends_on = [
+	local_file.key,
+  ] 
+  
   tenancy_ocid          = var.tenancy_ocid
   user_ocid             = var.user_ocid
   fingerprint           = var.fingerprint
