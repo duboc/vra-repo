@@ -8,7 +8,7 @@ provider "kubernetes" {
 
 resource "kubernetes_namespace" "meuSpace" {
     metadata {
-        name = "meuNamespace"
+        name = "meunamespace"
     } 
 } 
 
