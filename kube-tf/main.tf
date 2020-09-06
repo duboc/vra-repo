@@ -1,10 +1,6 @@
 provider "kubernetes" {
     host = "https://api.dubokops.vmwlatam.com"
 
-    username = "var.username" 
-    password = "var.password"
-    insecure = var.security
-
     load_config_file = false
 }
 
