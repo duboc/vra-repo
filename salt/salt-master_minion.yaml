@@ -1,4 +1,4 @@
-tVersion: 1
+formatVersion: 1
 inputs:
   user:
     type: string
