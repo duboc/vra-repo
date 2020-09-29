@@ -13,7 +13,7 @@ inputs:
     title: Admin Account Password
     description: The password you would like to use for the System.
 resources:
-  Saxony_Minoin_1:
+  Saxony_Minion_1:
     type: Cloud.Machine
     dependsOn:
       - Saxony_Master
@@ -28,7 +28,7 @@ resources:
         - tag: 'env:vsphere'
       cloudConfig: |
         #cloud-config
-        hostname: saxony-minoin
+        hostname: saxony-minion
 
         users:
           - name: ${input.user}
