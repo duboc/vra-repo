@@ -12,20 +12,23 @@ inputs:
     default: VMware1!
     title: Admin Account Password
     description: The password you would like to use for the System.
+  ambiente:
+    type: string
+    enum:
+    - platform:vmw
+    - platform:azure
+    - platform:aws
+    default: platform:aws
 resources:
   Saxony_Minion_1:
     type: Cloud.Machine
     dependsOn:
       - Saxony_Master
-    metadata:
-      layoutPosition:
-        - 0
-        - 0
     properties:
-      image: Ubuntu-18
-      flavor: medium
+      image: Ubuntu
+      flavor: Medium
       constraints:
-        - tag: 'env:vsphere'
+        - tag: ${input.ambiente}
       cloudConfig: |
         #cloud-config
         hostname: saxony-minion
@@ -48,15 +51,11 @@ resources:
         - network: '${resource.Cloud_Network_1.id}'
   Saxony_Master:
     type: Cloud.Machine
-    metadata:
-      layoutPosition:
-        - 0
-        - 1
     properties:
-      image: Ubuntu-18
-      flavor: medium
+      image: Ubuntu
+      flavor: Medium
       constraints:
-        - tag: 'env:vsphere'
+        - tag: ${input.ambiente}
       cloudConfig: |
         #cloud-config
         hostname: saxony-master
@@ -78,11 +77,5 @@ resources:
         - network: '${resource.Cloud_Network_1.id}'
   Cloud_Network_1:
     type: Cloud.Network
-    metadata:
-      layoutPosition:
-        - 1
-        - 0
     properties:
-      constraints:
-        - tag: 'env:vsphere'
       networkType: existing
