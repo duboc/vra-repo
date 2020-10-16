@@ -48,7 +48,7 @@ variable "vs_name" {
 }
 variable "vs_port" {
   type    = number
-  default = "80"
+  default = 80
 }
 variable "network_profile" {
   type    = string
