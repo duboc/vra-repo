@@ -127,7 +127,7 @@ output "tls_private_key" { value = "${tls_private_key.example_ssh.private_key_pe
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
-    name                  = "myVM"
+    name                  = var.nome
     location              = "eastus"
     resource_group_name   = azurerm_resource_group.myterraformgroup.name
     network_interface_ids = [azurerm_network_interface.myterraformnic.id]
