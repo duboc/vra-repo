@@ -40,7 +40,7 @@ variable "poolgroup_name" {
 }
 variable "avi_terraform_vs_vip" {
   type    = string
-  default = "172.27.100.205"
+  default = "172.27.100.206"
 }
 variable "vs_name" {
   type    = string
