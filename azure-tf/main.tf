@@ -140,7 +140,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
         storage_account_type = "Premium_LRS"
     }
     
-    storage_data_disk {
+    data_disk {
         name              = "myDataDisk"
         create_option     = "Empty"
         lun               = 1 
