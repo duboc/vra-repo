@@ -125,6 +125,12 @@ resource "tls_private_key" "example_ssh" {
 }
 output "tls_private_key" { value = "${tls_private_key.example_ssh.private_key_pem}" }
 
+resource "azurerm_virtual_machine_data_disk_attachment" "myterraformvm" {
+  managed_disk_id    = azurerm_managed_disk.example.id
+  virtual_machine_id = azurerm_virtual_machine.example.id
+  lun                = "10"
+  caching            = "ReadWrite"
+}
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
@@ -140,12 +146,6 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
         storage_account_type = "Premium_LRS"
     }
     
-    data_disk {
-        name              = "myDataDisk"
-        create_option     = "Empty"
-        lun               = 1 
-        disk_size_gb      = 10
-    } 
     source_image_reference {
         publisher = "Canonical"
         offer     = "UbuntuServer"
