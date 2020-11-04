@@ -142,11 +142,9 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
     
     storage_data_disk {
         name              = "myDataDisk"
-        caching           = "ReadWrite"
         create_option     = "Empty"
         lun               = 1 
         disk_size_gb      = 10
-        storage_account_type = "Premium_LRS"
     } 
     source_image_reference {
         publisher = "Canonical"
