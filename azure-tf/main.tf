@@ -125,6 +125,12 @@ resource "tls_private_key" "example_ssh" {
 }
 output "tls_private_key" { value = "${tls_private_key.example_ssh.private_key_pem}" }
 
+resource "azure_data_disk" "data" {
+  lun                  = 0
+  size                 = 10
+  virtual_machine      = var.name
+}
+
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
     name                  = var.nome
