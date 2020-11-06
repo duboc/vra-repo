@@ -27,7 +27,7 @@ data "vsphere_network" "network" {
 
 resource "vsphere_virtual_machine" "vm" {
   name                       = "terraform-${count.index + 1}"
-  count                      = 2
+  count                      = var.quantidade 
   datastore_id               = data.vsphere_datastore.datastore.id
   wait_for_guest_net_timeout = 0
   num_cpus                   = 1
