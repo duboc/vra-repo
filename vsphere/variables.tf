@@ -1,1 +1,1 @@
-quantidade "quantidade" {}
+variable "quantidade" {}
