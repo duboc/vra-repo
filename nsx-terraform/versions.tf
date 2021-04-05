@@ -4,5 +4,4 @@ terraform {
       source = "vmware/nsxt"
     }
   }
-  required_version = ">= 0.13"
 }
