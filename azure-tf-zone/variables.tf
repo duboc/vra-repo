@@ -1,3 +1,11 @@
+variable "user_information" {
+      type = object({
+              name    = string
+                  address = string
+                    })
+        sensitive = true
+}
+
 variable "prefix" {
   default = "duboc"
   description = "The prefix which should be used for all resources in this example"
