@@ -1,9 +1,14 @@
+variable "minha_lista" {
+    type    = list(string)
+    default = ["objetoA", "objetoB", "objectoC"]
+}
+
+
 variable "user_information" {
       type = object({
               name    = string
-                  address = string
+              address = string
                     })
-        sensitive = true
 }
 
 variable "prefix" {
