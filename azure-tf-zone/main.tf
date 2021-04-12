@@ -86,7 +86,10 @@ resource "azurerm_linux_virtual_machine" "main" {
   admin_password                  = "P@ssw0rd1234!"
 
   zone = var.zona
-
+  
+  lifecycle {
+        prevent_destroy = true
+      } 
 
   disable_password_authentication = false
   network_interface_ids = [
