@@ -1,0 +1,8 @@
+{
+    "vrops_data": {
+        "username": "admin",
+        "password": "VMware1!",
+        "vrops_ip": "10.182.14.128",
+        "cloud_proxy_ip": "10.182.13.7"
+    }
+}
