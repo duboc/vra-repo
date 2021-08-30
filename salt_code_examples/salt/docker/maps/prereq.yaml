@@ -1,0 +1,21 @@
+# This map file contains the prerequisite settings.
+
+{% load_yaml as prereq %}
+
+master: "192.168.50.10"
+master_minion: "master.local" # minion id of the minion running on the master
+
+resource_minimums:
+  mincpu: 1
+  minram: 300
+  mindisk: 73400320 # 1k blocks
+  coretypes:
+    - Intel(R) Core(TM) i7-4870HQ CPU @ 2.50GHz
+    - Intel(R) Core(TM) i7-4870HQ CPU @ 3.50GHz
+
+vosflex:
+  dockerurl: https://somedockerurl
+  dockerpath: dockerpath.io
+  tag: dockertag
+
+{% endload %}

@@ -1,0 +1,15 @@
+# docker settings
+
+{% load_yaml as dockerinfo %}
+
+docker_repos:
+  docker-ce-edge:
+    humanname: Docker CE Edge - $basearch
+    baseurl: 'https://download.docker.com/linux/centos/7/$basearch/edge'
+    gpgkey: 'https://download.docker.com/linux/centos/gpg'
+  docker-ce-edge-source:
+    humanname: Docker CE Edge - Sources
+    baseurl: 'https://download.docker.com/linux/centos/7/source/edge'
+    gpgkey: 'https://download.docker.com/linux/centos/gpg'
+
+{% endload %}

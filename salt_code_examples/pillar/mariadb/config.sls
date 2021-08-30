@@ -1,0 +1,12 @@
+root_pw: salt
+cmuser_password: cm_password
+amonuser_password: amon_password
+rmanuser_password: rman_password
+hiveuser_password: hive_password
+oozieuser_password: oozie_password
+hueuser_password: hue_password
+sentryuser_password: sentry_password
+navuser_password: nav_password
+navmsuser_password: navms_password
+sqoopuser_password: sqoop_password
+repluser_password: repluser_password

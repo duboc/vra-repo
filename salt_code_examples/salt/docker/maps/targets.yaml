@@ -1,0 +1,16 @@
+
+{% load_yaml as targetlist %}
+
+targets:
+  minion1: # specify the the target system with name (identical to future minion id) and ip address
+    ip: "192.168.50.51"
+    use_ssh_key: False
+    dockerinfo:
+      IPRangeCIDR: "172.19.66.60/30"
+      macvlanname: "macnet32"
+      excludedIP: "172.19.66.11"
+  minion2:
+    ip: "192.168.50.52"
+    use_ssh_key: False
+
+{% endload %}

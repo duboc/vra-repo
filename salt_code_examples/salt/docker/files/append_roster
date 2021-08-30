@@ -1,0 +1,11 @@
+{% if use_ssh_key == False %}
+{{ id }}:
+  host: {{ host }}
+  user: {{pillar['ssh_account']['account']}}
+  passwd: {{pillar['ssh_account']['password']}}
+{% else %}
+{{ id }}:
+  host: {{ host }}
+  user: {{pillar['ssh_account']['account']}}
+  priv: {{pillar['ssh_account']['key_file']}}
+{% endif %}

@@ -1,0 +1,3 @@
+dbmaster: minion2.local
+dbslave: minion3.local
+cloudera_manager: minion1.local
