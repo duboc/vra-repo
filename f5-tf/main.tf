@@ -6,7 +6,7 @@ provider "bigip" {
 
 resource bigip_ltm_node "this" {
   count            = var.quantidade
-  name             = "/Common/var.namePrefix_count.index"
+  name             = "/Common/${var.namePrefix}-${count.index}"
   address          = var.ip_addresses
   connection_limit = "0"
   dynamic_ratio    = "1"
@@ -16,7 +16,7 @@ resource bigip_ltm_node "this" {
 }
 
 resource bigip_ltm_pool "this" {
-  name                = "/Common/var.namePrefix-pool"
+  name                = "/Common/${var.namePrefix}-pool"
   load_balancing_mode = "round-robin"
   description         = ""
   monitors            = ["/Common/https"]
@@ -25,13 +25,13 @@ resource bigip_ltm_pool "this" {
 }
 
 resource bigip_ltm_pool_attachment "this" {
-  count = 3
+  count = 1
   pool  = bigip_ltm_pool.this.name
-  node  = "bigip_ltm_node.this[count.index].name:443"
+  node = "${bigip_ltm_node.this[count.index].name}:80"
 }
 
 resource bigip_ltm_virtual_server "this" {
-  name                       = "/Common/var.virtual_server_name"
+  name                       = "/Common/${var.virtual_server_name}"
   destination                = var.virtual_server_ip
   description                = var.virtual_server_description
   port                       = var.virtual_server_port
