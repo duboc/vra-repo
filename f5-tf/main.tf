@@ -7,7 +7,7 @@ provider "bigip" {
 resource bigip_ltm_node "this" {
   count            = var.quantidade
   name             = "/Common/${var.namePrefix}-${count.index}"
-  address          = var.ip_addresses
+  address          = var.ip_addresses[count.index]
   connection_limit = "0"
   dynamic_ratio    = "1"
   monitor          = "/Common/icmp"
