@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "google" {
-  credentials = jsondecode(var.google_creds)
+  credentials = var.google_creds
   
   project = "sddc-latam"
   region  = "us-central1"
