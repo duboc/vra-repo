@@ -25,7 +25,7 @@ resource bigip_ltm_pool "this" {
 }
 
 resource bigip_ltm_pool_attachment "this" {
-  count = 3
+  count = 4
   pool  = bigip_ltm_pool.this.name
   node = "${bigip_ltm_node.this[count.index].name}:80"
 }
