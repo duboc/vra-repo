@@ -80,7 +80,7 @@ resource "avi_pool" "testpool" {
   servers {
     ip {
       type= "V4"
-      addr= "192.168.100.10"
+      addr= var.address
     }
     port= 8080
   }
