@@ -1,48 +1,43 @@
 formatVersion: 1
 inputs:
+  environment:
+    type: string
+    title: Select your landing zone
+    enum:
+      - 'platform:vmc'
+      - 'platform:aws'
+    default: 'platform:vmc'
+  vropsCP:
+    title: vROps Cloud Proxy IP Address
+    type: string
+  vraCP:
+    title: vRA Cloud Proxy IP Address
+    type: string
+  refreshToken:
+    title: CSP Refresh Token
+    type: string
+  publicKey:
+    type: string
+    title: SSH Public Key
+    encrypted: true
   wfinstance:
     type: string
     default: 'https://surf.wavefront.com'
+    format: hidden
   wftoken:
     type: string
-    default: cb9a7b18-755b-408c-a3d0-633870a55a84
-    encrypted: true
+    default: 715bafc8-e5de-4494-b847-859dd12249f9
+    format: hidden
+  master:
+    type: string
+    readonly: true
+    default: 35.173.128.44
+    format: hidden
   wfsource:
     type: string
     default: cd-nats-duboc
-  ambiente:
-    type: string
-    enum:
-      - 'platform:vmw'
-      - 'platform:aws'
-      - 'platform:azure'
-    default: 'platform:vmw'
-  publicKey:
-    type: string
-    encrypted: true
-    default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1UDCZciJBxVbSo2tpDsPWtyQ34JcY/tbPAlRsx2QUQaxttwCfrIEZURnn7OHiiwFvtiZy8nl1TCKa4s2SXLN/rEJvdDvlD9kWOSxJ1eBK3aPVVrT0TA3+rKFMhL5uz5Ku90iR0ZSALGz6uoGgLxizhbIrCWbnyCE5ThOPjCM6FvuefRUwSLuxJ6ZpenVfO2+TzTzp0a2qq5Wrt2sMsevpQGoveykB8Dliliwsx+hlC1LZ6V2Q59MOYY5SQ9PSXiUNjK5LbV32YjcQ2e2tU0qUpIytj/qFFrlZ9DRBN37GdbWH56LtHwgvXCLhSMuhYwXBJ5o/zsjnUwwW+Symsiql aduboc@administrators-MacBook-Pro-3.local
+    format: hidden
 resources:
-  frontend_sg:
-    type: Cloud.SecurityGroup
-    properties:
-      securityGroupType: new
-      name: frontend
-      rules:
-        - source: any
-          direction: inbound
-          name: frontend
-          ports: 80
-          protocol: TCP
-  Cloud_SecurityGroup_2:
-    type: Cloud.SecurityGroup
-    properties:
-      securityGroupType: new
-      rules:
-        - source: '${resource.frontend_sg.id}'
-          direction: inbound
-          service: TCP
-          ports: 80
-          name: api-server
   frontend_1:
     type: Cloud.Machine
     dependsOn:
@@ -54,7 +49,7 @@ resources:
         - key: tier
           value: frontend
       constraints:
-        - tag: '${input.ambiente}'
+        - tag: '${input.environment}'
       remoteAccess:
         authentication: publicPrivateKey
         sshKey: '${input.publicKey}'
@@ -65,6 +60,8 @@ resources:
 
         packages:
           - nginx
+          - unzip
+          
         write_files:
           - path: /etc/nginx/conf.d/nginx.conf
             permissions: '0644'
@@ -75,18 +72,32 @@ resources:
                  stub_status;
                }
              }
+          - content: |
+             project: '${env.projectName}'
+             usuario: '${env.requestedBy}'
+             App: nginx
+             Tier: frontend
+            path: /etc/salt/grains
 
         runcmd: 
+          - hostname frontend
           - git clone https://github.com/duboc/cats-and-dogs.git
           - cp -r cats-and-dogs/site/* /var/www/html/
           - cd /var/www/html/js
           - sed -i 's/changecat/${resource.api_server_1.address}/' boot.js
           - sed -i 's/changedog/${resource.api_server_1.address}/' boot.js
+          - curl -L https://bootstrap.saltstack.com -o install_salt.sh
+          - sudo sh install_salt.sh -A ${input.master}
+            #-------------- Cloud Service portal: User/Organization Settings > My Account > API Tokens > Generate a New API Token----------------------#
+          - wget --no-check-certificate https://${input.vropsCP}/downloads/salt/download.sh
+          - chmod +x download.sh
+          - sleep 12m
+          - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
+          - cd /tmp
+          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
         #cloud-config
-      networks:
-        - network: '${resource.Cloud_NSX_Network_1.id}'
-          securityGroups:
-            - '${resource.frontend_sg.id}'
   api_server_1:
     type: Cloud.Machine
     dependsOn:
@@ -98,7 +109,7 @@ resources:
         - key: tier
           value: apiservice
       constraints:
-        - tag: '${input.ambiente}'
+        - tag: '${input.environment}'
       remoteAccess:
         authentication: publicPrivateKey
         sshKey: '${input.publicKey}'
@@ -106,9 +117,20 @@ resources:
         #cloud-config
         repo_update: true
         repo_upgrade: true
-             
+
+        packages:
+          - unzip
+
+        write_files:
+          - content: |
+             project: '${env.projectName}'
+             usuario: '${env.requestedBy}'
+             App: golang-api
+             Tier: api-server
+            path: /etc/salt/grains
+
         runcmd:
-          - hostname api-server
+          - hostname api
           - apt-get update 
           - apt-get upgrade
           - apt-get install docker.io -y
@@ -120,36 +142,18 @@ resources:
           - echo "export NATS_ENDPOINT=nats://${resource.nats_server_1.address}:4222" >> /root/.profile
           - source /root/.profile
           - git clone https://github.com/duboc/cats-and-dogs
-          - docker run --restart=always -d -p 80:80 -e WAVEFRONT_INSTANCE=${input.wfinstance} -e WAVEFRONT_TOKEN=${input.wftoken} -e NATS_ENDPOINT=nats://${resource.nats_server_1.address}:4222 duboc/cdbackend-nats:1.0
-      networks:
-        - network: '${resource.Cloud_NSX_Network_1.id}'
-          securityGroups:
-            - '${resource.Cloud_SecurityGroup_2.id}'
-  nats_sg:
-    type: Cloud.SecurityGroup
-    properties:
-      securityGroupType: new
-      rules:
-        - source: '${resource.Cloud_SecurityGroup_2.id}'
-          protocol: TCP
-          ports: 4222
-          direction: inbound
-          name: queue-entry
-        - source: '${resource.fila_sg.id}'
-          protocol: TCP
-          ports: 4222
-          direction: inbound
-          name: queue-subscription
-  mongo_sg:
-    type: Cloud.SecurityGroup
-    properties:
-      securityGroupType: new
-      rules:
-        - source: '${resource.fila_sg.id}'
-          ports: 27017
-          protocol: TCP
-          name: mongo-acesso
-          direction: inbound
+          - docker run --restart=always -d -p 80:80 -e WAVEFRONT_INSTANCE=${input.wfinstance} -e WAVEFRONT_TOKEN=${input.wftoken} -e NATS_ENDPOINT=nats://${resource.nats_server_1.address}:4222 public.ecr.aws/c5s4k8y1/cdbackend-nats:1.0
+          - curl -L https://bootstrap.saltstack.com -o install_salt.sh
+          - sudo sh install_salt.sh -A ${input.master}
+            #-------------- Cloud Service portal: User/Organization Settings > My Account > API Tokens > Generate a New API Token----------------------#
+          - wget --no-check-certificate https://${input.vropsCP}/downloads/salt/download.sh
+          - chmod +x download.sh
+          - sleep 12m
+          - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
+          - cd /tmp
+          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
   mongo_server_1:
     type: Cloud.Machine
     properties:
@@ -162,7 +166,7 @@ resources:
         authentication: publicPrivateKey
         sshKey: '${input.publicKey}'
       constraints:
-        - tag: '${input.ambiente}'
+        - tag: '${input.environment}'
       cloudConfig: |
         #cloud-config
         repo_update: true
@@ -214,10 +218,18 @@ resources:
              #auditLog:
              
              #snmp:
-             
+          - content: |
+             project: '${env.projectName}'
+             usuario: '${env.requestedBy}'
+             App: mongodb
+             Tier: database
+            path: /etc/salt/grains
+
+        packages:
+          - unzip
 
         runcmd:
-          - hostname mongo-server
+          - hostname mongodb
           - wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
           - echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
           - apt-get update -y
@@ -226,10 +238,17 @@ resources:
           - mv /etc/mongod2.conf /etc/mongod.conf
           - chmod 644 /etc/mongod.conf
           - service mongod start
-      networks:
-        - network: '${resource.Cloud_NSX_Network_1.id}'
-          securityGroups:
-            - '${resource.mongo_sg.id}'
+          - curl -L https://bootstrap.saltstack.com -o install_salt.sh
+          - sudo sh install_salt.sh -A ${input.master}
+            #-------------- Cloud Service portal: User/Organization Settings > My Account > API Tokens > Generate a New API Token----------------------#
+          - wget --no-check-certificate https://${input.vropsCP}/downloads/salt/download.sh
+          - chmod +x download.sh
+          - sleep 12m
+          - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
+          - cd /tmp
+          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
   nats_server_1:
     type: Cloud.Machine
     dependsOn:
@@ -241,7 +260,7 @@ resources:
         - key: tier
           value: nats
       constraints:
-        - tag: '${input.ambiente}'
+        - tag: '${input.environment}'
       remoteAccess:
         authentication: publicPrivateKey
         sshKey: '${input.publicKey}'
@@ -249,19 +268,37 @@ resources:
         #cloud-config
         repo_update: true
         repo_upgrade: all
-             
+
+        write_files:
+          - content: |
+             project: '${env.projectName}'
+             usuario: '${env.requestedBy}'
+             App: nats
+             Tier: queue
+            path: /etc/salt/grains
+
+        packages:
+          - unzip
+
         runcmd:
-          - hostname nats-server
+          - hostname nats
           - apt-get update 
           - apt-get upgrade
           - apt-get install docker.io -y
           - systemctl enable docker
           - systemctl restart docker
-          - docker run --restart=always -d -p 4222:4222 -p 8222:8222 nats:2.1.2
-      networks:
-        - network: '${resource.Cloud_NSX_Network_1.id}'
-          securityGroups:
-            - '${resource.nats_sg.id}'
+          - docker run --restart=always -d -p 4222:4222 -p 8222:8222 public.ecr.aws/c5s4k8y1/nats:2.1.2
+          - curl -L https://bootstrap.saltstack.com -o install_salt.sh
+          - sudo sh install_salt.sh -A ${input.master}
+            #-------------- Cloud Service portal: User/Organization Settings > My Account > API Tokens > Generate a New API Token----------------------#
+          - wget --no-check-certificate https://${input.vropsCP}/downloads/salt/download.sh
+          - chmod +x download.sh
+          - sleep 12m
+          - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
+          - cd /tmp
+          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
   queue_service_1:
     type: Cloud.Machine
     dependsOn:
@@ -273,7 +310,7 @@ resources:
         - key: tier
           value: queue_service
       constraints:
-        - tag: '${input.ambiente}'
+        - tag: '${input.environment}'
       remoteAccess:
         authentication: publicPrivateKey
         sshKey: '${input.publicKey}'
@@ -281,9 +318,20 @@ resources:
         #cloud-config
         repo_update: true
         repo_upgrade: true
-             
+
+        write_files:
+          - content: |
+             project: '${env.projectName}'
+             usuario: '${env.requestedBy}'
+             App: golang-queue
+             Tier: queue-mservice
+            path: /etc/salt/grains
+
+        packages:
+          - unzip
+
         runcmd:
-          - hostname queue-service
+          - hostname queue
           - apt-get update 
           - apt-get upgrade
           - apt-get install docker.io -y
@@ -293,25 +341,15 @@ resources:
           - echo "export MONGODB_ENDPOINT=mongodb://${resource.mongo_server_1.address}" >> /root/.profile
           - source /root/.profile
           - git clone https://github.com/duboc/cats-and-dogs
-          - docker run --restart=always -d -e NATS_ENDPOINT=nats://${resource.nats_server_1.address}:4222 -e MONGODB_ENDPOINT=mongodb://${resource.mongo_server_1.address} duboc/cdbackend-mongo:1.0
-      networks:
-        - network: '${resource.Cloud_NSX_Network_1.id}'
-          securityGroups:
-            - '${resource.fila_sg.id}'
-  fila_sg:
-    type: Cloud.SecurityGroup
-    properties:
-      securityGroupType: new
-      rules:
-        - source: any
-          direction: inbound
-          ports: 22
-          protocol: TCP
-          name: ssh
-  Cloud_NSX_Network_1:
-    type: Cloud.NSX.Network
-    properties:
-      networkType: routed
-      constraints:
-        - tag: 'net:routed'
-
+          - docker run --restart=always -d -e NATS_ENDPOINT=nats://${resource.nats_server_1.address}:4222 -e MONGODB_ENDPOINT=mongodb://${resource.mongo_server_1.address} public.ecr.aws/c5s4k8y1/cdbackend-mongo:1.0
+          - curl -L https://bootstrap.saltstack.com -o install_salt.sh
+          - sudo sh install_salt.sh -A ${input.master}
+            #-------------- Cloud Service portal: User/Organization Settings > My Account > API Tokens > Generate a New API Token----------------------#
+          - wget --no-check-certificate https://${input.vropsCP}/downloads/salt/download.sh
+          - chmod +x download.sh
+          - sleep 12m
+          - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
+          - cd /tmp
+          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
