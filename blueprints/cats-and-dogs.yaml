@@ -16,10 +16,10 @@ inputs:
   refreshToken:
     title: CSP Refresh Token
     type: string
-  publicKey:
-    type: string
-    title: SSH Public Key
-    encrypted: true
+#  publicKey:
+#    type: string
+#    title: SSH Public Key
+#    encrypted: true
   wfinstance:
     type: string
     default: 'https://surf.wavefront.com'
@@ -50,9 +50,9 @@ resources:
           value: frontend
       constraints:
         - tag: '${input.environment}'
-      remoteAccess:
-        authentication: publicPrivateKey
-        sshKey: '${input.publicKey}'
+#      remoteAccess:
+#        authentication: publicPrivateKey
+#        sshKey: '${input.publicKey}'
       cloudConfig: |
         #cloud-config
         repo_update: true
@@ -110,9 +110,9 @@ resources:
           value: apiservice
       constraints:
         - tag: '${input.environment}'
-      remoteAccess:
-        authentication: publicPrivateKey
-        sshKey: '${input.publicKey}'
+#      remoteAccess:
+#        authentication: publicPrivateKey
+#        sshKey: '${input.publicKey}'
       cloudConfig: |
         #cloud-config
         repo_update: true
@@ -162,9 +162,9 @@ resources:
       tags:
         - key: tier
           value: database
-      remoteAccess:
-        authentication: publicPrivateKey
-        sshKey: '${input.publicKey}'
+#      remoteAccess:
+#        authentication: publicPrivateKey
+#        sshKey: '${input.publicKey}'
       constraints:
         - tag: '${input.environment}'
       cloudConfig: |
@@ -261,9 +261,9 @@ resources:
           value: nats
       constraints:
         - tag: '${input.environment}'
-      remoteAccess:
-        authentication: publicPrivateKey
-        sshKey: '${input.publicKey}'
+#      remoteAccess:
+#        authentication: publicPrivateKey
+#        sshKey: '${input.publicKey}'
       cloudConfig: |
         #cloud-config
         repo_update: true
@@ -311,9 +311,9 @@ resources:
           value: queue_service
       constraints:
         - tag: '${input.environment}'
-      remoteAccess:
-        authentication: publicPrivateKey
-        sshKey: '${input.publicKey}'
+#      remoteAccess:
+#        authentication: publicPrivateKey
+#        sshKey: '${input.publicKey}'
       cloudConfig: |
         #cloud-config
         repo_update: true
