@@ -22,6 +22,13 @@ resource "azurerm_subnet" "internal" {
   address_prefixes     = ["10.0.2.0/24"]
 }
 
+# Create (and display) an SSH key
+resource "tls_private_key" "example_ssh" {
+  algorithm = "RSA"
+  rsa_bits = 4096
+}
+output "tls_private_key" { value = "${tls_private_key.example_ssh.private_key_pem}" }
+
 resource "azurerm_network_interface" "main" {
   name                = "${var.prefix}-nic"
   resource_group_name = azurerm_resource_group.main.name
@@ -39,11 +46,17 @@ resource "azurerm_linux_virtual_machine" "main" {
   resource_group_name             = azurerm_resource_group.main.name
   location                        = azurerm_resource_group.main.location
   size                            = "Standard_F2"
-  admin_username                  = "adminuser"
   network_interface_ids = [
     azurerm_network_interface.main.id,
   ]
 
+  admin_username = "azureuser"
+  disable_password_authentication = true
+
+admin_ssh_key {
+    username       = "azureuser"
+    public_key     = tls_private_key.example_ssh.public_key_openssh
+}  
 
   source_image_reference {
     publisher = "Canonical"
