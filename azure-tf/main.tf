@@ -123,14 +123,18 @@ resource "tls_private_key" "example_ssh" {
   algorithm = "RSA"
   rsa_bits = 4096
 }
-output "tls_private_key" { value = "${tls_private_key.example_ssh.private_key_pem}" }
 
-resource "azurerm_virtual_machine_data_disk_attachment" "myterraformvm" {
-  managed_disk_id    = azurerm_managed_disk.example.id
-  virtual_machine_id = azurerm_virtual_machine.example.id
-  lun                = "10"
-  caching            = "ReadWrite"
+output "tls_private_key" { 
+    value = "${tls_private_key.example_ssh.private_key_pem}"
+    sensitive = true 
 }
+
+#resource "azurerm_virtual_machine_data_disk_attachment" "myterraformvm" {
+#  managed_disk_id    = azurerm_managed_disk.example.id
+#  virtual_machine_id = azurerm_virtual_machine.example.id
+#  lun                = "10"
+#  caching            = "ReadWrite"
+#}
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
