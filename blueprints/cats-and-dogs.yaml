@@ -94,7 +94,7 @@ resources:
           - sleep 12m
           - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
           - cd /tmp
-          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - wget https://ci-data-collector.s3.amazonaws.com/VMware-LI-Agent-8-0-0-14743436/VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
         #cloud-config
@@ -151,7 +151,7 @@ resources:
           - sleep 12m
           - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
           - cd /tmp
-          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - wget https://ci-data-collector.s3.amazonaws.com/VMware-LI-Agent-8-0-0-14743436/VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
   mongo_server_1:
@@ -246,7 +246,7 @@ resources:
           - sleep 12m
           - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
           - cd /tmp
-          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - wget https://ci-data-collector.s3.amazonaws.com/VMware-LI-Agent-8-0-0-14743436/VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
   nats_server_1:
@@ -296,7 +296,7 @@ resources:
           - sleep 12m
           - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
           - cd /tmp
-          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - wget https://ci-data-collector.s3.amazonaws.com/VMware-LI-Agent-8-0-0-14743436/VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
   queue_service_1:
@@ -350,6 +350,6 @@ resources:
           - sleep 12m
           - bash download.sh -o install -t ${input.refreshToken} -c ${input.vropsCP}
           - cd /tmp
-          - wget https://liagent800.s3.us-east-2.amazonaws.com/VMware-Log-Insight-Agent-8.0.0-14743436.bin
+          - wget https://ci-data-collector.s3.amazonaws.com/VMware-LI-Agent-8-0-0-14743436/VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - chmod +x VMware-Log-Insight-Agent-8.0.0-14743436.bin
           - sudo LIAGENT_SSL=no SERVERHOST=${input.vraCP} SERVERPROTO=cfapi SERVERPORT=9000 /tmp/VMware-Log-Insight-Agent-8.0.0-14743436.bin
